@@ -136,7 +136,9 @@ Let's first understand the expression for $d_j$ better.
 - $A_j$ is the $j$-th column of the constraint matrix $A$ of the generic LP. Every constraint in the concrete LP we want to solve (the RMP from above) looks as follows: $\sum_{p \in P \land t \in p} x_p = 1$. We have such a constraint for every task $t$. Mentally transposing this we understand that $A$ has a column for every shift $p \in \tilde{P}$. Since we are interested in candidate shifts that are not yet part of $\tilde{P}$, we need to imagine what the column of $A$ for such a shift would be. $A_j$ has binary entries, one entry for every task $t$ where an entry is $1$ if task $t$ is covered by shift $j$.
 - $c_j$ is the coefficient of shift $j$ in the objective. This is one for every shift, so $c_j = 1$
 
-Thus the reduced cost of some shift-candidate, that we consider adding to the RMP is $1$ minus the sum of all optimal dual variables $y_t$ of tasks $t$ that are covered by the shift.
+Thus the reduced cost of some shift-candidate $s$ that we consider adding to the RMP is 
+$$d_s = 1 - \sum_{\text{task } t \in s} y_t$$ 
+That is we consider the sum of all optimal dual variables $y_t$ of tasks $t$ that are covered by the shift $s$.
 The idea is thus to build a graph consisting of one (or multiple) nodes for every task, a source $s$ and a sink $t$, such that every path between $s$ and $t$ node is a valid shift.
 If we can build such a graph, then after every iteration of solving the RMP, we simply extract the optimal dual variables $y$, update the edge costs in a way that covering task $t$ induces $-y_t$ cost.
 Finding the shift-candidate with minimal reduced cost thus amounts to finding the shortest s-t-path in this graph. 
