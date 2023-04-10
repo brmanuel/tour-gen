@@ -49,11 +49,13 @@ Initially we start with a trivial set of shifts that allows covering all tasks: 
 We then solve the LP relaxation (drop the integrality constraint) of the above MILP problem (let's call it relaxed master problem RMP) using a standard LP solver.
 Given the optimal solution to the RMP LP theory provides us with a way to find a shift $p \notin \tilde{P}_0$ that we should add to the pool of candidate shifts $\tilde{P}_1$ of the next iteration, in order to improve the objective.
 Let's derive it first abstractly for a general LP problem:
+
+### Abstract Column Generation
 Consider the general linear program
 
 $$
 \begin{align}
-\min c^T \cdot x \\
+\min\ &c^T \cdot x \\
 s.t. & \\
 &A \cdot x = b \\
 &x \geq 0
@@ -61,12 +63,73 @@ s.t. & \\
 $$
 
 Where $A$ is an $n \times m$ matrix, meaning that there are $m$ variables and $n$ constraints.
-Let $B$ be a set of $n$ columns of $A$.
+Let $B$ be a set of $n$ columns of $A$ and $N := \{ 1,\dots,m \} \setminus B$ the remaining columns.
 We write $A_B$ to mean the $n \times n$ submatrix of these $n$ columns of $A$.
 Similarly we write $x_B$ and $c_B$ to mean the subvectors of $x$ and $c$ corresponding to these columns.
-It can be shown that every LP has an optimal solution $x^*$ 
+If the columns of $A_B$ are linearly independent, then $A_B$ is a basis of $\mathbb{R}^n$ and the value of $x_B$ can be computed from
+$$\left[A_B, A_N\right] \cdot \left[x_B \atop x_N\right] = b$$
+as
+$$x_B = A_B^{-1} \cdot (b - A_N x_N)$$
+The solution $x_B$ obtained from this expression by setting $x_N$ to zero is called the basic solution of basis $B$.
+It can be shown that every LP for which an optimal solution exists, there exists a basic solution $x_B$ obtaining the optimal objective value.
 
+Given some basic solution $x_B$ we can check whether it is optimal by expressing the objective function at $x_B$ in terms of the non-basic variables (using the above expression for $x_B$:
 
+$$
+c^T \cdot x = \left[c_B, c_N\right] \cdot \left[x_B \atop x_N\right] = c_B^T \cdot A_B^{-1} b - c_B^T \cdot A_B^{-1} A_N x_N + c_N \cdot x_N
+$$
+
+The coefficient of the non-basic variable $x_j$ in this expression is
+
+$$
+d_j := -c_B^T \cdot A_B^{-1} A_j + c_j
+$$
+
+$d_j$ is referred to as the reduced cost of non-basic variable $x_j$ at basis $B$.
+If $d_j$ is negative, increasing $x_j$ slightly will decrease the objective, if $d_j$ is positive, increasing $x_j$ slightly will increase the objective.
+In a minimization problem, basic solution $x_B$ is thus optimal, if all non-basic variables have positive reduced cost.
+
+In column generation, we use the expression for the reduced cost, to check if there are additional candidate variables (shifts, in our case), that are currently outside of the pool of variables $\tilde{P}$, that could be added in order to improve the objective.
+For this we need a way of computing the shift-candidate with the smallest reduced cost.
+If this reduced cost is positive, we know that the current solution is already optimal, otherwise we add the shift to $\tilde{P}_{i+1}$ and re-solve the LP.
+
+The expression we need to minimize is a bit unwieldy.
+LP duality theory provides us with a nice way to avoid having to compute matrix inverses.
+The following LP is called the dual of the above generic LP (we call it the primal):
+
+$$
+\begin{align}
+\max\ &b^T \cdot y \\
+s.t. & \\
+&A^T \cdot y + w = c \\
+&w \geq 0
+\end{align}
+$$
+
+Duality theory provides many interesting results about the relationship between an LP and its dual.
+Here we need the following two facts:
+- Complementary slackness / KKT conditions: If $x$ is the optimal solution of the primal and $y$, $w$ is the optimal solution of the dual, then holds $x^T \cdot w = 0$
+- Given an optimal solution to the primal, we can easily get an optimal solution to the dual. In particular, standard solvers allow accessing the dual solution after having computed the optimal primal solution.
+
+Using the definition of the dual above and the first fact, we can simplify the expression for $d_j$:
+
+Let $B$ be the optimal basis of the primal and let $y,w$ be optimal dual variables.
+Then holds 
+$$A^T \cdot y + w = c$$ 
+because $y,w$ are feasible. Only considering the rows $B$ of $A$, $w$ and $c$ this means 
+$$A_B^T \cdot y + w_B = c_B$$
+Assuming non-degeneracy and from the first fact above we know that $w_B = 0$, so we get 
+$$A_B^T \cdot y = c_B$$
+By multiplying $A_B^{-T}$ (the transpose of $A_B^{-1}$) from the left we get 
+$$A_B^{-T} (A_B^T \cdot y) = A_B^{-T} \cdot c_B$$
+Which reduces to 
+$$y = c_B^T \cdot A_B^{-1}$$
+
+Thus we get the simpler expression for the reduced cost of non-basic variable $x_j$
+$$d_j = y^T \cdot A_j + c_j$$
+where $y$ is the vector of optimal dual variables.
+
+### Column generation for shift planning
 
 ## Column generation and LP theory resources
 
