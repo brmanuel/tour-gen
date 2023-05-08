@@ -12,6 +12,21 @@ class Graph:
     def add_edge(self, source, target):
         self._graph.add_edge(source, target)
 
+    def remove_edge(self, source, target):
+        self._graph.remove_edge(source, target)
+
+    def remove_node(self, node):
+        self._graph.remove_node(node)
+
+    def get_out_neighbors(self, node):
+        return set(self._graph.get_out_neighbors(node))
+
+    def get_in_neighbors(self, node):
+        return set(self._graph.get_in_neighbors(node))
+
+    def get_nodes(self):
+        return set(self._graph.nodes())
+
     def get_shortest_s_t_path_with_weight(self, source, target):
         """Returns a shortest s-t-path and the weight of this path."""
         pred_map, dist_map = networkx.dijkstra_predecessor_and_distance(
