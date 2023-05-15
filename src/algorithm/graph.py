@@ -19,10 +19,10 @@ class Graph:
         self._graph.remove_node(node)
 
     def get_out_neighbors(self, node):
-        return set(self._graph.get_out_neighbors(node))
+        return set(v for _, v in self._graph.out_edges(node))
 
     def get_in_neighbors(self, node):
-        return set(self._graph.get_in_neighbors(node))
+        return set(u for u, _ in self._graph.in_edges(node))
 
     def get_nodes(self):
         return set(self._graph.nodes())

@@ -1,5 +1,6 @@
 from functools import cache, cached_property
 import json
+from typing import Set
 
 from src.input.input import Input
 
@@ -24,7 +25,6 @@ class NvidiaInput(Input):
             (edge["sourceNodeId"], edge["targetNodeId"]): edge
             for edge in data["arcs"]
         }
-        
 
     @staticmethod
     def from_file(filename):
@@ -33,69 +33,70 @@ class NvidiaInput(Input):
             return NvidiaInput(data)
         
     
-    def _get_edges_between_nodes(self, left_node, right_node):
-        edge = self._edge_map.get((left_node["id"], right_node["id"]))
-        if edge is None:
+    def _get_edges_between_nodes(self, left_node_id, right_node_id):
+        edge_key = (left_node_id, right_node_id)
+        if edge_key not in self._edge_map:
             return set()
-        return set([edge])
+        return set([edge_key])
     
-    def get_edges_between(self, left_task, right_task):
-        return self._get_edges_between_nodes(left_task, right_task)
+    def get_edges_between(self, left_task_id, right_task_id):
+        return self._get_edges_between_nodes(left_task_id, right_task_id)
     
-    def get_source_edges(self, group, task):
-        source_node_id = group["sourceNodeId"]
-        source_node = self._node_map[source_node_id]
-        return self._get_edges_between_nodes(source_node, task)
+    def get_source_edges(self, group_id, task_id):
+        group = self._group_map[group_id]
+        source_node_id = group["startNodeId"]
+        return self._get_edges_between_nodes(source_node_id, task_id)
     
-    def get_target_edges(self, task, group):
-        target_node_id = group["targetNodeId"]
-        target_node = self._node_map[target_node_id]
-        return self._get_edges_between_nodes(task, target_node)
+    def get_target_edges(self, task_id, group_id):
+        group = self._group_map[group_id]
+        target_node_id = group.get("endNodeId")
+        return self._get_edges_between_nodes(task_id, target_node_id)
     
     @staticmethod
     def _is_depot_node(node):
-        return node["type"] in [SOURCE_DEPOT, TARGET_DEPOT]
+        return node["type"] in [
+            NvidiaInput.SOURCE_DEPOT, NvidiaInput.TARGET_DEPOT
+        ]
     
     @cached_property
     def _tasks(self):
-        return set(
-            node for node in self._node_map.values()
+        return {
+            node["id"]: node
+            for node in self._node_map.values()
             if not NvidiaInput._is_depot_node(node)
-        )
+        }
     
-    @staticmethod
-    def _has_group_skills_for_task(group, task):
+    def _has_group_skills_for_task(self, group_id, task):
+        group = self._group_map[group_id]
         return set(task["requiredSkills"]) <= set(group["skills"])
 
     @cache
-    def get_tasks_for_group(self, group):
+    def get_tasks_for_group(self, group_id) -> Set[str]:
         all_tasks = self._tasks
         return set(
-            task for task in all_tasks
-            if NvidiaInput._has_group_skills_for_task(group, task)
+            task_id for task_id, task in all_tasks.items()
+            if self._has_group_skills_for_task(group_id, task)
         )
         
     
     @cache
-    def get_groups(self):
-        return set(self._group_map.values())
+    def get_groups(self) -> Set[str]:
+        return set(self._group_map.keys())
     
-    def get_start_time_of_task(self, task):
+    def get_start_time_of_task(self, task_id):
+        task = self._node_map[task_id]
         return task["startTime"]
-
     
-    def get_depot_resources(self, group):
+    def get_depot_resources(self, group_id):
+        group = self._group_map[group_id]
         return {"group": group["id"], "shift_start": None, "last_break": None}
 
     def _get_target_of_edge(self, edge):
-        return self._node_map[edge[1]]
+        return self._node_map[edge["targetNodeId"]]
 
-    def _get_source_of_edge(self, edge):
-        return self._node_map[edge[0]]
-
-    def propagate_resources(self, left_resources, edge):
-        target = _get_target_of_edge(edge)
-        arc = self._edge_map[edge]
+    def propagate_resources(self, left_resources, edge_id):
+        arc = self._edge_map[edge_id]
+        target = self._get_target_of_edge(arc)
 
         left_group = left_resources["group"]
         left_shift_start = left_resources["shift_start"]
@@ -121,13 +122,18 @@ class NvidiaInput(Input):
 
         return {"group": right_group, "shift_start": right_shift_start, "last_break": right_last_break}
 
-    def _are_resources_valid_at_time(self, resources, time):
-        return time - resources["shift_start"] <= D_SHIFT and time - resources["last_break"] <= D_BREAK
+    @staticmethod
+    def _are_resources_valid_at_time(resources, time):
+        if resources["shift_start"] is None and resources["last_break"] is None:
+            # resources at depot start
+            return True
+        return time - resources["shift_start"] <= NvidiaInput.D_SHIFT and time - resources["last_break"] <= NvidiaInput.D_BREAK
 
-    def are_resources_valid_at_task(self, resources, task):
-        return _are_resources_valid_at_time(resources, task["endTime"])
+    def are_resources_valid_at_task(self, resources, task_id):
+        task = self._node_map[task_id]
+        return NvidiaInput._are_resources_valid_at_time(resources, task["endTime"])
 
-    def are_resources_valid_at_edge(self, resources, edge):
-        arc = self._edge_map[edge]
+    def are_resources_valid_at_edge(self, resources, edge_id):
+        arc = self._edge_map[edge_id]
         source = self._node_map[arc["sourceNodeId"]]
-        return _are_resources_valid_at_time(resources, source["endTime"] + arc["duration"])
+        return NvidiaInput._are_resources_valid_at_time(resources, source["endTime"] + arc["duration"])
