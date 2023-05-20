@@ -1,3 +1,6 @@
+# setup env using
+# conda create --name tour_gen --file requirements.txt --channel default --channel conda-forge
+
 exceptiongroup==1.1.1
 iniconfig==2.0.0
 networkx==3.1
@@ -5,3 +8,4 @@ packaging==23.1
 pluggy==1.0.0
 pytest==7.3.1
 tomli==2.0.1
+pyscipopt==4.3.0
