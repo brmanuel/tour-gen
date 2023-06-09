@@ -77,7 +77,9 @@ class NvidiaInput(Input):
             task_id for task_id, task in all_tasks.items()
             if self._has_group_skills_for_task(group_id, task)
         )
-        
+
+    def get_tasks(self) -> Set[str]:
+        return self._tasks
     
     @cache
     def get_groups(self) -> Set[str]:

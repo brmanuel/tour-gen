@@ -19,6 +19,7 @@ class Node:
 class Prizing:
 
     def __init__(self, input : Input):
+        self._input = input
         self._graph = Prizing.build_graph(input)
 
     @staticmethod
@@ -120,7 +121,8 @@ class Prizing:
         return graph
 
 
-    def compute_prizing(duals):
+    def compute_prizing(self, duals : Map["Task", float]):
+        """."""
         pass
 
     def get_best_candidate_cost(self) -> float:

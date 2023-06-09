@@ -22,6 +22,10 @@ class Input(ABC):
         (depending on skills)."""
 
     @abstractmethod
+    def get_tasks(self):
+        """Returns the set of all tasks."""
+
+    @abstractmethod
     def get_groups(self):
         """Returns the set of all groups in this input."""
 

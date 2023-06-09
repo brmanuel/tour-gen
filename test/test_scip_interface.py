@@ -2,6 +2,9 @@
 from pyscipopt import Model, SCIP_PARAMSETTING
 import pytest
 
+def eq(x, y):
+    return abs(x-y) < 1e-8
+
 
 def test_primals():
     model = Model()
@@ -13,8 +16,8 @@ def test_primals():
     model.addCons(y >= -2.5)
     model.optimize()
     sol = model.getBestSol()
-    assert sol[x] == -1
-    assert sol[y] == -2
+    assert eq(sol[x], -1)
+    assert eq(sol[y], -2)
 
 def test_duals():
     primal = Model()
@@ -43,59 +46,59 @@ def test_duals():
 
     primal_sol = primal.getBestSol()
     dual_sol = dual.getBestSol()
-    print("primal")
-    print(primal_sol[x], primal_sol[y])
-    print(primal.getDualsolLinear(c1), primal.getDualsolLinear(c2))
+    print("solution: x* =", primal_sol[x], ", y* =", primal_sol[y], ", a* =", dual_sol[a], ", b* =", dual_sol[b])
+    print("getDualSolVal: a* =", primal.getDualSolVal(c1), ", b* =", primal.getDualSolVal(c2))
+    print("getDualsolLinear: a* =", primal.getDualsolLinear(c1), ", b* =", primal.getDualsolLinear(c2))
     print("dual")
     print(dual_sol[a], dual_sol[b])
+    print(dual.getDualSolVal(d1), dual.getDualSolVal(d2))
     print(dual.getDualsolLinear(d1), dual.getDualsolLinear(d2))
     
-    assert primal_sol[x] == 9
-    assert primal_sol[y] == 6
-    assert primal.getDualsolLinear(c2) == dual_sol[b]
-    assert primal.getDualsolLinear(c1) == dual_sol[a]
+    assert eq(primal_sol[x], 9)
+    assert eq(primal_sol[y], 6)
+    assert eq(primal.getDualSolVal(c2), dual_sol[b])
+    assert eq(primal.getDualSolVal(c1), dual_sol[a])
+    assert eq(dual.getDualSolVal(d1), primal_sol[x])
+    assert eq(dual.getDualSolVal(d2), primal_sol[y])
 
-def test_duals_2():
+
+    
+def test_duals2():
     primal = Model()
     x1 = primal.addVar("x1", lb=0, ub=None)
-    x2 = primal.addVar("x2", lb=None, ub=0)
-    x3 = primal.addVar("x3", lb=None, ub=None)
-    c1 = primal.addCons(2*x1 - 7*x2 + 5*x3 == -2)
-    c2 = primal.addCons(x2 <= 3)
-    c3 = primal.addCons(x1 - 7*x3 >= 8)
-    c4 = primal.addCons(5*x1 - x2 >= 0)
-    primal.setObjective(4*x1 + 3*x2 - 2*x3, sense="minimize")
-    # to get duals, we need to switch off some features of SCIP!
-    # c.f. https://github.com/scipopt/PySCIPOpt/issues/136
+    x2 = primal.addVar("x2", lb=0, ub=None)
+    c1 = primal.addCons(5*x1 + 6*x2 == 7)
+    primal.setObjective(3*x1 + 4*x2, sense="maximize")
     primal.setPresolve(SCIP_PARAMSETTING.OFF)
     primal.setHeuristics(SCIP_PARAMSETTING.OFF)
     primal.disablePropagation()
     primal.optimize()
-    
-    primal_sol = primal.getBestSol()
-    del primal
 
     dual = Model()
     y1 = dual.addVar("y1", lb=None, ub=None)
-    y2 = dual.addVar("y2", lb=None, ub=0)
-    y3 = dual.addVar("y3", lb=0, ub=None)
-    y4 = dual.addVar("y4", lb=0, ub=None)
-    d1 = dual.addCons(2*y1 + y3 + 5*y4 <= 4)
-    d2 = dual.addCons(-7*y1 + y2 - y4 >= 3)
-    d3 = dual.addCons(5*y1 - 7*y3 == -2)
-    dual.setObjective(-2*y1 + 3*y2 + 8*y3, sense="maximize")
-
+    d1 = dual.addCons(5*y1 >= 3)
+    d2 = dual.addCons(6*y1 >= 4)
+    dual.setObjective(7*y1, sense="minimize")
     dual.setPresolve(SCIP_PARAMSETTING.OFF)
     dual.setHeuristics(SCIP_PARAMSETTING.OFF)
     dual.disablePropagation()
     dual.optimize()
 
+    primal_sol = primal.getBestSol()
     dual_sol = dual.getBestSol()
-    # assert primal_sol[x1] == dual.getDualsolLinear(d1)
-    # assert primal_sol[x2] == dual.getDualsolLinear(d2)
-    # assert primal_sol[x3] == dual.getDualsolLinear(d3)
-    # assert primal.getDualsolLinear(c1) == dual_sol[y1]
-    # assert primal.getDualsolLinear(c2) == dual_sol[y2]
-    # assert primal.getDualsolLinear(c3) == dual_sol[y3]
-    # assert primal.getDualsolLinear(c4) == dual_sol[y4]
     
+    print("primal")
+    print(primal_sol[x1], primal_sol[x2])
+    print(primal.getDualSolVal(c1))
+    print("dual")
+    print(dual_sol[y1])
+    print(dual.getDualSolVal(d1), dual.getDualSolVal(d2))
+    
+    assert eq(primal.getDualSolVal(c1), dual_sol[y1])
+    # WARNING:
+    # getting dual solution values using pyscipopt only works for
+    # non-bound constraints, i.e. constraints containing at least two variables.
+    # Currently, for active bound constraints, pyscipopt simply returns the bound
+    # https://github.com/scipopt/PySCIPOpt/issues/136#issuecomment-420651298
+    assert eq(dual.getDualSolVal(d1) / 5, primal_sol[x1])
+    assert eq(dual.getDualSolVal(d2) / 6, primal_sol[x2])
