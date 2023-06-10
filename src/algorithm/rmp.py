@@ -1,19 +1,23 @@
 from pyscipopt import Model, SCIP_PARAMSETTING
+from typing import Set
 
+from src.model.tour import Tour
 
 class Rmp:
-    def __init__(self, input : Input, candidates : Set[Tour]):
+    def __init__(self, tasks : Set["Task"], candidates : Set[Tour]):
         self._candidates = candidates
-        self._input = input
+        self._tasks = tasks
         self._primal_solution = None
         self._dual_solution = None
 
     def solve(self):
-        self._primal_sol, self._dual_sol = Rmp.solve_rmp(self._input)
+        self._primal_sol, self._dual_sol = Rmp.solve_rmp(
+            self._tasks, self._candidates
+        )
         
         
     @staticmethod
-    def solve_rmp(input : Input):
+    def solve_rmp(tasks : Set["Task"], candidates : Set[Tour]):
         """Creates the RMP LP model, solves it and extracts primal and
         dual solutions."""
         model = Model()
@@ -57,7 +61,7 @@ class Rmp:
         for tour in candidates:
             primal_solution[tour] = sol[selection_variables[tour]]
 
-        for task in input.get_tasks():
+        for task in tasks:
             dual_solution[task] = model.getDualSolVal(cover_constraints[task])
 
         return primal_solution, dual_solution

@@ -18,7 +18,7 @@ class Solver:
             for task in input.get_tasks_for_group(group):
                 if task not in handled_tasks:
                     handled_tasks.add(task)
-                    solution.add(self._tour_factory.create(group, set([task])))
+                    solution.add(self._tour_factory.create(group, [task]))
         return solution        
     
     def solve(self):

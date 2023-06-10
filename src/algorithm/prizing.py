@@ -15,12 +15,14 @@ class Node:
     def __hash__(self):
         return self.id
 
-
 class Prizing:
 
-    def __init__(self, input : Input):
+    def __init__(self, input : Input, tour_factory):
         self._input = input
         self._graph = Prizing.build_graph(input)
+        self._source_nodes = None
+        self._target_node = None
+        self._tour_factory = tour_factory
 
     @staticmethod
     def build_graph(input : Input):
@@ -39,10 +41,10 @@ class Prizing:
             return None
 
         graph = Graph()        
-        source_node = create_node("source", None, None)
-        target_node = create_node("target", None, None)
-        graph.add_node(source_node)
-        graph.add_node(target_node)
+        self._source_node = create_node("source", None, None)
+        self._target_node = create_node("target", None, None)
+        graph.add_node(self._source_node)
+        graph.add_node(self._target_node)
         groups = input.get_groups()
         for group in groups:
             group_tasks = input.get_tasks_for_group(group)
@@ -51,8 +53,8 @@ class Prizing:
             depot_end = create_node("depot_end", group, None)
             graph.add_node(depot_start)
             graph.add_node(depot_end)
-            graph.add_edge(source_node, depot_start)
-            graph.add_edge(depot_end, target_node)
+            graph.add_edge(self._source_node, depot_start)
+            graph.add_edge(depot_end, self._target_node)
 
             task_to_nodes = {i: set() for i in range(len(group_tasks))}
             
@@ -99,7 +101,7 @@ class Prizing:
                         if input.are_resources_valid_at_edge(final_resources, edge):
                             graph.add_edge(node, depot_end)
 
-        graph = Prizing._clean_graph(graph, source_node, target_node)
+        graph = Prizing._clean_graph(graph, self._source_node, self._target_node)
         return graph
 
     @staticmethod
@@ -122,13 +124,31 @@ class Prizing:
 
 
     def compute_prizing(self, duals : Map["Task", float]):
-        """."""
-        pass
+        """Set the costs of all nodes in the graph accoring to duals,
+        then compute the shortest tour."""
+        for node in self._graph.get_nodes():
+            if node.type == "task":
+                task = node.data
+                self._graph.set_node_cost(node, duals[task])
+        path, weight = self._graph.get_shortest_s_t_path_with_weight(
+            self._source_node, self._target_node
+        )
+        assert path[0].type == "source"
+        assert path[1].type == "depot_start"
+        assert path[-2].type == "depot_end"
+        assert path[-1].type == "target"
+        group = path[1].data
+        tasks = [path[i].data for i in range(2,-2)]
+        self._best_candidate = self._tour_factory.create(group, tasks)
+        self._best_candidate_cost = weight
+        
 
     def get_best_candidate_cost(self) -> float:
-        pass
+        assert self._best_candidate_cost is not None
+        return self._best_candidate_cost
 
     def get_best_candidate() -> Tour:
-        pass
+        assert self._best_candidate is not None
+        return self._best_candidate
 
 

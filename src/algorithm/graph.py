@@ -9,8 +9,8 @@ class Graph:
     def add_node(self, node):
         self._graph.add_node(node)
 
-    def add_edge(self, source, target):
-        self._graph.add_edge(source, target)
+    def add_edge(self, source, target, weight=0):
+        self._graph.add_edge(source, target, weight=weight)
 
     def remove_edge(self, source, target):
         self._graph.remove_edge(source, target)
@@ -36,7 +36,7 @@ class Graph:
         while current != source:
             path = [current] + path
             assert current in pred_map, "No source-target path exists!"
-            current = pred_map[current]
+            current = pred_map[current][0]
         path = [source] + path
         return path, dist_map[target]
         
