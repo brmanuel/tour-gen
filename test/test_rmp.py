@@ -1,21 +1,17 @@
 import pytest
-from typing import Set, List
 
-from src.model.tour import Tour
 from src.algorithm.rmp import Rmp
+from src.model.basic_tour import BasicTour
+from src.algorithm.solver import Solver
+from stubs.stub_tour import StubTour
+from stubs.stub_input import StubInput
 
-class TestTour(Tour):
-    def __init__(self, tasks : List["Task"]):
-        self._tasks = tuple(tasks)
-        
-    def get_tasks(self):
-        return self._tasks
 
-def test_rmp():
+def test_rmp_with_candidates():
     tasks = [f"task_{i}" for i in range(10)]
     candidates = [
-        TestTour([f"task_{i}" for i in tasks])
-        for tasks in [
+        StubTour([f"task_{task}" for task in tour])
+        for tour in [
                 [0,1,2,3],
                 [4],
                 [5,6,7,8,9],
@@ -33,7 +29,31 @@ def test_rmp():
     rmp = Rmp(tasks, candidates)
     rmp.solve()
     solution = rmp.get_solution()
-    for i in range(0,4):
+    for i in range(0,3):
         assert solution[candidates[i]] == 1.0
-    for i in range(4,10):
+    for i in range(3,10):
         assert solution[candidates[i]] == 0.0
+
+def test_rmp_with_initial_solution():
+    source = 10
+    target = 11
+    edges = set([
+        (source,0),(0,1),(1,2),(2,3),(3,target),
+        (source,4),(4,target),
+        (source,5),(5,6),(6,7),(7,8),(8,9),(9,target),
+        (source,0),(0,1),(1,target),
+        (source,1),(1,2),(2,target),
+        (source,2),(2,3),(3,target),
+        (source,3),(3,4),(4,target),
+        (source,4),(4,5),(5,target),
+        (source,5),(5,6),(6,target),
+        (source,6),(6,7),(7,target),
+        (source,7),(7,8),(8,target),
+        (source,8),(8,9),(9,target)
+    ])
+    input = StubInput(edges, source, target)
+    solver = Solver(input, BasicTour)
+    solver.solve()
+    print(solver.get_solution())
+    assert False
+    

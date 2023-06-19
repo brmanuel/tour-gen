@@ -1,4 +1,4 @@
-from pyscipopt import Model, SCIP_PARAMSETTING
+from pyscipopt import Model, SCIP_PARAMSETTING, quicksum
 from typing import Set
 
 from src.model.tour import Tour
@@ -11,7 +11,7 @@ class Rmp:
         self._dual_solution = None
 
     def solve(self):
-        self._primal_sol, self._dual_sol = Rmp.solve_rmp(
+        self._primal_solution, self._dual_solution = Rmp.solve_rmp(
             self._tasks, self._candidates
         )
         
@@ -23,7 +23,7 @@ class Rmp:
         model = Model()
 
         selection_variables = {}
-        cover_constrains = {}
+        cover_constraints = {}
         task_to_tours = {}
         for idx, tour in enumerate(candidates):
             selection_variables[tour] = model.addVar(
@@ -39,13 +39,9 @@ class Rmp:
                 task_to_tours[task].add(tour)
                 
         for task, tours in task_to_tours.items():
-            cover_task_cons = model.addCons()
-            for tour in tours:
-                model.addConsCoeff(
-                    cover_task_cons,
-                    selection_variables[tour],
-                    1.0
-                )
+            cover_task_cons = model.addCons(
+                quicksum(selection_variables[tour] for tour in tours) == 1, f"cover_{task}"
+            )
             cover_constraints[task] = cover_task_cons
             
         model.setMinimize()

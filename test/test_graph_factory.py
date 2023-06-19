@@ -1,19 +1,19 @@
 import pytest
 from src.algorithm.prizing import Prizing
-from test.nvidia_input_mock import NvidiaInputMock
+from stubs.stub_nvidia_input import StubNvidiaInput
 
 
 @pytest.fixture
 def load_input():
     def _load_input(path):
-        return NvidiaInputMock.from_file(path)
+        return StubNvidiaInput.from_file(path)
     return _load_input
 
 
 def test_small_input(load_input):
 
     input = load_input("input_data/small_graph.json")
-    graph = Prizing.build_graph(input)
+    graph, _, _ = Prizing.build_graph(input)
     type_map = {
         ("task", "task"): input.get_edges_between,
         ("depot_start", "task"): input.get_source_edges,

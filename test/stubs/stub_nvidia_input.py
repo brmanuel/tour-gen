@@ -2,13 +2,13 @@ import json
 
 from src.input.nvidia_input import NvidiaInput
 
-class NvidiaInputMock(NvidiaInput):
+class StubNvidiaInput(NvidiaInput):
     """Mock input class where all states are valid to ease testing."""
     @staticmethod
     def from_file(filename):
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return NvidiaInputMock(data)
+            return StubNvidiaInput(data)
 
     
     def are_resources_valid_at_task(self, resources, task_id):

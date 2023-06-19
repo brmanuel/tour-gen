@@ -46,7 +46,6 @@ class Input(ABC):
     def are_resources_valid_at_edge(self, resources, edge):
         """Check if transitioning over <edge> given the <resources> is valid w.r.t. the business rules."""
 
-    @staticmethod
     @abstractmethod
-    def get_start_time_of_task(task):
+    def get_start_time_of_task(self, task):
         """Returns the starttime of the task in minutes after 1.1.1970."""

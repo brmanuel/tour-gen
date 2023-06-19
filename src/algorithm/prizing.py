@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict
 
 from src.model.tour import Tour
 from src.input.input import Input 
@@ -19,9 +19,7 @@ class Prizing:
 
     def __init__(self, input : Input, tour_factory):
         self._input = input
-        self._graph = Prizing.build_graph(input)
-        self._source_nodes = None
-        self._target_node = None
+        self._graph, self._source_node, self._target_node = Prizing.build_graph(input)
         self._tour_factory = tour_factory
 
     @staticmethod
@@ -41,10 +39,10 @@ class Prizing:
             return None
 
         graph = Graph()        
-        self._source_node = create_node("source", None, None)
-        self._target_node = create_node("target", None, None)
-        graph.add_node(self._source_node)
-        graph.add_node(self._target_node)
+        source_node = create_node("source", None, None)
+        target_node = create_node("target", None, None)
+        graph.add_node(source_node)
+        graph.add_node(target_node)
         groups = input.get_groups()
         for group in groups:
             group_tasks = input.get_tasks_for_group(group)
@@ -53,8 +51,8 @@ class Prizing:
             depot_end = create_node("depot_end", group, None)
             graph.add_node(depot_start)
             graph.add_node(depot_end)
-            graph.add_edge(self._source_node, depot_start)
-            graph.add_edge(depot_end, self._target_node)
+            graph.add_edge(source_node, depot_start)
+            graph.add_edge(depot_end, target_node)
 
             task_to_nodes = {i: set() for i in range(len(group_tasks))}
             
@@ -101,8 +99,8 @@ class Prizing:
                         if input.are_resources_valid_at_edge(final_resources, edge):
                             graph.add_edge(node, depot_end)
 
-        graph = Prizing._clean_graph(graph, self._source_node, self._target_node)
-        return graph
+        graph = Prizing._clean_graph(graph, source_node, target_node)
+        return graph, source_node, target_node
 
     @staticmethod
     def _clean_graph(graph : Graph, source, target):
@@ -123,7 +121,7 @@ class Prizing:
         return graph
 
 
-    def compute_prizing(self, duals : Map["Task", float]):
+    def compute_prizing(self, duals : Dict["Task", float]):
         """Set the costs of all nodes in the graph accoring to duals,
         then compute the shortest tour."""
         for node in self._graph.get_nodes():
