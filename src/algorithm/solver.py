@@ -38,8 +38,13 @@ class Solver:
             prizing.compute_prizing(duals)
             if (prizing.get_best_candidate_cost() >= 0):
                 break
-            candidates.add(prizing.get_best_candidate())
-        self._solution = rmp.get_solution()
+            candidate = prizing.get_best_candidate()
+            candidates.add(candidate)
+        solution = rmp.get_solution()
+        self._solution = set()
+        for tour, decision_var in solution.items():
+            if decision_var > 0.5:
+                self._solution.add(tour)
 
     def get_solution(self):
         assert self._solution is not None

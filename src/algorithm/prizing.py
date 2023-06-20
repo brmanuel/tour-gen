@@ -7,13 +7,9 @@ from src.algorithm.graph import Graph
 
 @dataclass(frozen=True)
 class Node:
-    id : int
     type : str 
     data : Any
     resources : Any
-
-    def __hash__(self):
-        return self.id
 
 class Prizing:
 
@@ -24,11 +20,11 @@ class Prizing:
 
     @staticmethod
     def build_graph(input : Input):
-        num_nodes = 0
+        nodes = {}
         def create_node(type, data, resources):
-            nonlocal num_nodes
-            num_nodes += 1
-            return Node(num_nodes, type, data, resources)
+            if (type, data, resources) not in nodes:
+                nodes[(type, data, resources)] = Node(type, data, resources)
+            return nodes[(type, data, resources)]
 
         def create_neighbor(input, left_resources, edge, right_task):
             right_resources = input.propagate_resources(
@@ -127,16 +123,18 @@ class Prizing:
         for node in self._graph.get_nodes():
             if node.type == "task":
                 task = node.data
-                self._graph.set_node_cost(node, duals[task])
+                self._graph.set_node_cost(node, -duals[task])
+        # reduced_cost(s) = 1 - sum_{task on s} dual_val(task)
         path, weight = self._graph.get_shortest_s_t_path_with_weight(
             self._source_node, self._target_node
         )
+        weight += 1
         assert path[0].type == "source"
         assert path[1].type == "depot_start"
         assert path[-2].type == "depot_end"
         assert path[-1].type == "target"
         group = path[1].data
-        tasks = [path[i].data for i in range(2,-2)]
+        tasks = [path[i].data for i in range(2,len(path)-2)]
         self._best_candidate = self._tour_factory.create(group, tasks)
         self._best_candidate_cost = weight
         
@@ -145,7 +143,7 @@ class Prizing:
         assert self._best_candidate_cost is not None
         return self._best_candidate_cost
 
-    def get_best_candidate() -> Tour:
+    def get_best_candidate(self) -> Tour:
         assert self._best_candidate is not None
         return self._best_candidate
 

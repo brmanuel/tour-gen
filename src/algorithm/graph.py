@@ -29,7 +29,8 @@ class Graph:
 
     def get_shortest_s_t_path_with_weight(self, source, target):
         """Returns a shortest s-t-path and the weight of this path."""
-        pred_map, dist_map = networkx.dijkstra_predecessor_and_distance(
+        # networkx.dijkstra_predecessor_and_distance assumes positive weights
+        pred_map, dist_map = networkx.bellman_ford_predecessor_and_distance(
             self._graph, source, weight="weight")
         path = []
         current = target

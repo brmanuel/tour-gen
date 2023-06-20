@@ -12,3 +12,11 @@ class StubTour(Tour, TourFactory):
     @staticmethod
     def create(group, tasks):
         return StubTour(tasks)
+
+    def __eq__(self, other):
+        if not isinstance(other, StubTour):
+            return False
+        return self.get_tasks() == other.get_tasks()
+
+    def __hash__(self):
+        return hash(self.get_tasks)

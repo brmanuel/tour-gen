@@ -44,16 +44,21 @@ def test_rmp_with_initial_solution():
         (source,0),(0,1),(1,target),
         (source,1),(1,2),(2,target),
         (source,2),(2,3),(3,target),
-        (source,3),(3,4),(4,target),
-        (source,4),(4,5),(5,target),
         (source,5),(5,6),(6,target),
         (source,6),(6,7),(7,target),
         (source,7),(7,8),(8,target),
         (source,8),(8,9),(9,target)
     ])
     input = StubInput(edges, source, target)
-    solver = Solver(input, BasicTour)
+    solver = Solver(input, StubTour)
     solver.solve()
-    print(solver.get_solution())
-    assert False
+    solution = solver.get_solution()
+    expected_result = [
+        StubTour.create(StubInput.GROUP, [0,1,2,3]),
+        StubTour.create(StubInput.GROUP, [4]),
+        StubTour.create(StubInput.GROUP, [5,6,7,8,9])
+    ]
+    for tour in solution:
+        assert tour in expected_result
+    assert len(expected_result) == len(solution)
     

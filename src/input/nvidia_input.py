@@ -1,9 +1,16 @@
 from functools import cache, cached_property
 import json
 from typing import Set
+from dataclasses import dataclass
 
 from src.input.input import Input
 
+@dataclass(frozen=True)
+class NvidiaResource():
+    group : str,
+    shift_start : int,
+    last_break : int
+    
 
 class NvidiaInput(Input):
 
@@ -91,7 +98,7 @@ class NvidiaInput(Input):
     
     def get_depot_resources(self, group_id):
         group = self._group_map[group_id]
-        return {"group": group["id"], "shift_start": None, "last_break": None}
+        return NvidiaResource(group["id"], None, None)
 
     def _get_target_of_edge(self, edge):
         return self._node_map[edge["targetNodeId"]]
@@ -100,9 +107,9 @@ class NvidiaInput(Input):
         arc = self._edge_map[edge_id]
         target = self._get_target_of_edge(arc)
 
-        left_group = left_resources["group"]
-        left_shift_start = left_resources["shift_start"]
-        left_last_break = left_resources["last_break"]
+        left_group = left_resources.group
+        left_shift_start = left_resources.shift_start
+        left_last_break = left_resources.last_break
 
         right_group = left_group
 
@@ -122,20 +129,20 @@ class NvidiaInput(Input):
             # no change of break since last task
             right_last_break = left_last_break
 
-        return {"group": right_group, "shift_start": right_shift_start, "last_break": right_last_break}
+        return NvidiaResource(right_group, right_shift_start, right_last_break}
 
     @staticmethod
-    def _are_resources_valid_at_time(resources, time):
-        if resources["shift_start"] is None and resources["last_break"] is None:
+    def _are_resources_valid_at_time(resources : NvidiaResource, time):
+        if resources.shift_start is None and resources.last_break is None:
             # resources at depot start
             return True
-        return time - resources["shift_start"] <= NvidiaInput.D_SHIFT and time - resources["last_break"] <= NvidiaInput.D_BREAK
+        return time - resources.shift_start <= NvidiaInput.D_SHIFT and time - resources.last_break <= NvidiaInput.D_BREAK
 
-    def are_resources_valid_at_task(self, resources, task_id):
+    def are_resources_valid_at_task(self, resources : NvidiaResource, task_id):
         task = self._node_map[task_id]
         return NvidiaInput._are_resources_valid_at_time(resources, task["endTime"])
 
-    def are_resources_valid_at_edge(self, resources, edge_id):
+    def are_resources_valid_at_edge(self, resources : NvidiaResource, edge_id):
         arc = self._edge_map[edge_id]
         source = self._node_map[arc["sourceNodeId"]]
         return NvidiaInput._are_resources_valid_at_time(resources, source["endTime"] + arc["duration"])

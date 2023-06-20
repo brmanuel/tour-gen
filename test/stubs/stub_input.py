@@ -60,10 +60,10 @@ class StubInput(Input):
         return set([StubInput.GROUP])
 
     def get_depot_resources(self, group):
-        return set()
+        return tuple([])
 
     def propagate_resources(self, left_resources, edge):
-        return set()
+        return tuple([])
         
     def are_resources_valid_at_task(self, resources, task):
         return True
