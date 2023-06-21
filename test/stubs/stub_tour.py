@@ -3,15 +3,19 @@ from src.model.tour_factory import TourFactory
 from typing import List
 
 class StubTour(Tour, TourFactory):
-    def __init__(self, tasks : List["Task"]):
+    def __init__(self, group, tasks : List["Task"]):
         self._tasks = tuple(tasks)
+        self._group = group
         
     def get_tasks(self):
         return self._tasks
 
+    def get_group(self):
+        return self._group
+
     @staticmethod
     def create(group, tasks):
-        return StubTour(tasks)
+        return StubTour(group, tasks)
 
     def __eq__(self, other):
         if not isinstance(other, StubTour):

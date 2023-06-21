@@ -1,6 +1,7 @@
 private/
 workdir/
 input_data/
+inputs/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

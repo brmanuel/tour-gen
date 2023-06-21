@@ -7,8 +7,8 @@ from src.input.input import Input
 
 @dataclass(frozen=True)
 class NvidiaResource():
-    group : str,
-    shift_start : int,
+    group : str
+    shift_start : int
     last_break : int
     
 
@@ -35,7 +35,7 @@ class NvidiaInput(Input):
 
     @staticmethod
     def from_file(filename):
-        with open(filename, "r", encoding="utf-8") as f:
+        with open(filename, "r", encoding="cp1252") as f:
             data = json.load(f)
             return NvidiaInput(data)
         
@@ -129,7 +129,7 @@ class NvidiaInput(Input):
             # no change of break since last task
             right_last_break = left_last_break
 
-        return NvidiaResource(right_group, right_shift_start, right_last_break}
+        return NvidiaResource(right_group, right_shift_start, right_last_break)
 
     @staticmethod
     def _are_resources_valid_at_time(resources : NvidiaResource, time):

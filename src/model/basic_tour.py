@@ -9,6 +9,9 @@ class BasicTour(Tour, TourFactory):
     def get_tasks(self):
         return self._tasks
 
+    def get_group(self):
+        return self._group
+    
     @staticmethod
     def create(group, tasks):
         return BasicTour(group, tasks)
