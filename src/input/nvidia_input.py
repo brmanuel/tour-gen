@@ -16,7 +16,7 @@ class NvidiaInput(Input):
 
     SOURCE_DEPOT = "source-Depot"
     TARGET_DEPOT = "target-Depot"
-    D_SHIFT = 600 # at most 10h shifts
+    D_SHIFT = 630 # at most 10h30 shifts
     D_BREAK = 270 # at most 4.5h without break
 
     def __init__(self, data):

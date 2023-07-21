@@ -1,5 +1,6 @@
 
 from typing import Set
+from pprint import pprint
 
 from src.algorithm.prizing import Prizing
 from src.algorithm.rmp import Rmp
@@ -42,9 +43,17 @@ class Solver:
             candidates.add(candidate)
         solution = rmp.get_solution()
         self._solution = set()
+        task_coverage = { task : 0 for task in self._input.get_tasks() }
+        objective = 0
         for tour, decision_var in solution.items():
+            objective += decision_var
             if decision_var > 0.5:
                 self._solution.add(tour)
+            for task in tour.get_tasks():
+                task_coverage[task] += decision_var
+        #pprint(task_coverage)
+        print("Objective value: ", objective)
+        assert all(abs(cov - 1) < 1e-5 for cov in task_coverage.values())
 
     def get_solution(self):
         assert self._solution is not None

@@ -49,6 +49,7 @@ class Rmp:
         model.setPresolve(SCIP_PARAMSETTING.OFF)
         model.setHeuristics(SCIP_PARAMSETTING.OFF)
         model.disablePropagation()
+        model.hideOutput(True)
         model.optimize()
 
         sol = model.getBestSol()
