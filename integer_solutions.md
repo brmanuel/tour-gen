@@ -34,4 +34,8 @@ It is thus unclear if the candidates found in this way are in any way useful for
 
 ## Branch-and-price
 
+The standard approach for solving MIP using column generation is branch-and-price.
+The idea is to use branch-and-bound and solving each LP-relaxation using column generation.
+- The benefit of this approach is that we get optimal solutions
+- The downside is that the runtime of branch-and-bound crucially depends on getting good lower bounds on the best objective value.
 
