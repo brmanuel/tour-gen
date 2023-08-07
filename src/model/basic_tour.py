@@ -11,6 +11,12 @@ class BasicTour(Tour, TourFactory):
 
     def get_group(self):
         return self._group
+
+    def __hash__(self):
+        hashstr = f"{self.get_group()}"
+        for task in self.get_tasks():
+            hashstr += f"~{task}"
+        return hashstr.__hash__()
     
     @staticmethod
     def create(group, tasks):
